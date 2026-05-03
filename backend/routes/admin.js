@@ -57,4 +57,26 @@ router.get('/metrics', async (req, res) => {
     }
 });
 
+// GET /api/admin/model_status
+router.get('/model_status', async (req, res) => {
+    try {
+        const apiUrl = process.env.FINETUNED_API_URL || '';
+        if (!apiUrl) {
+            return res.json({ status: 'offline', message: 'API URL not configured' });
+        }
+        
+        // Use the native health endpoint of llama.cpp
+        const healthUrl = apiUrl.replace(/\/v1\/chat\/completions$/, '/health');
+        
+        const response = await fetch(healthUrl, { method: 'GET' });
+        if (response.ok) {
+            res.json({ status: 'online' });
+        } else {
+            res.json({ status: 'offline', message: `HTTP ${response.status}` });
+        }
+    } catch (e) {
+        res.json({ status: 'offline', message: 'Failed to connect' });
+    }
+});
+
 module.exports = router;

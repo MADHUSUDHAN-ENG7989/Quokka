@@ -47,7 +47,7 @@ app.post('/api/chat_stream', softAuth, async (req, res) => {
     res.setHeader('Connection', 'keep-alive');
 
     try {
-        const stream = rag.queryStream(req.body.query, req.body.history || [], req.user);
+        const stream = rag.queryStream(req.body.query, req.body.history || [], req.user, req.body.model);
         for await (const chunk of stream) {
             res.write(chunk);
         }

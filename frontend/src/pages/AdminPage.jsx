@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import './AdminPage.css';
 
-const API = 'http://localhost:8000';
+const API = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export default function AdminPage({ onBack }) {
     const { token } = useAuth();
     const [metrics, setMetrics] = useState(null);
+    const [modelStatus, setModelStatus] = useState('checking...');
     const [logs, setLogs] = useState([]);
     const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
     const [loading, setLoading] = useState(true);
@@ -16,8 +17,19 @@ export default function AdminPage({ onBack }) {
 
     useEffect(() => {
         fetchMetrics();
+        fetchModelStatus();
         fetchLogs(1);
     }, []);
+
+    const fetchModelStatus = async () => {
+        try {
+            const res = await fetch(`${API}/api/admin/model_status`, { headers: authHeaders });
+            const data = await res.json();
+            setModelStatus(data.status);
+        } catch (e) {
+            setModelStatus('offline');
+        }
+    };
 
     const fetchMetrics = async () => {
         try {
@@ -55,6 +67,9 @@ export default function AdminPage({ onBack }) {
                         <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                     </svg>
                     <span>Quokka Admin</span>
+                    <div className={`status-pill ${modelStatus === 'online' ? 'status-online' : 'status-offline'}`} title="Fine-tuned Model Status">
+                        {modelStatus === 'online' ? '🟢 Model Online' : (modelStatus === 'checking...' ? '⏳ Checking...' : '🔴 Model Offline')}
+                    </div>
                 </div>
                 <button className="admin-back-btn" onClick={onBack}>← Back to Chat</button>
             </div>

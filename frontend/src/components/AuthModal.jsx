@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
+import { motion } from 'framer-motion';
 import './AuthModal.css';
 
-const API = 'http://localhost:8000';
+const API = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export default function AuthModal({ onClose }) {
     const { login } = useAuth();
@@ -75,8 +76,20 @@ export default function AuthModal({ onClose }) {
     });
 
     return (
-        <div className="auth-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-            <div className="auth-modal">
+        <motion.div 
+            className="auth-overlay" 
+            onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+        >
+            <motion.div 
+                className="auth-modal"
+                initial={{ scale: 0.95, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.95, y: 20 }}
+                transition={{ type: "spring", duration: 0.5, bounce: 0.3 }}
+            >
                 <button className="auth-close" onClick={onClose}>×</button>
 
                 <div className="auth-header">
@@ -145,7 +158,7 @@ export default function AuthModal({ onClose }) {
                         {mode === 'login' ? 'Register' : 'Sign in'}
                     </button>
                 </p>
-            </div>
-        </div>
+            </motion.div>
+        </motion.div>
     );
 }

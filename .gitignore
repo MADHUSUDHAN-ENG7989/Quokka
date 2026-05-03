@@ -91,3 +91,13 @@ typings/
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# Large ML model files & training data (exceed GitHub 100MB limit)
+ai-engine/models/
+ai-engine/data/raw_data/
+*.safetensors
+*.gguf
+*.pt
+*.pth
+*.bin
+*.jsonl

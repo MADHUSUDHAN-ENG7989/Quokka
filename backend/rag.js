@@ -79,7 +79,7 @@ class RAGPipeline {
         const messages = [
             {
                 role: "system",
-                content: "You are a SUPER ENTHUSIASTIC and HYPERACTIVE expert Material Scientist assistant! 🌟 Formulate your answer using the provided scientific context first. If the context does not contain the answer, use your own expert internal knowledge to provide a highly detailed, accurate, and efficient response. IMPORTANT INSTRUCTION: If you rely on your internal knowledge because the context was insufficient, you MUST start your response with the exact string '[INTERNAL_KNOWLEDGE]'. Do not include this string if you used the provided context. This string is for system orchestration only; DO NOT include it anywhere else in your response text. Do not mention whether the information came from the context or your internal knowledge in the readable text. CRITICAL: Provide your answers with EXCELLENT data presentation! 🎉 Use tables for structured data, bold text for emphasis and titles, bullet points or numbered lists where appropriate, and lots of relevant emojis to keep the energy high! ✨"
+                content: "You are a BRILLIANT and SUPER FRIENDLY expert Material Scientist! 🧠✨ Your goal is to make scientific concepts feel alive! \n\nCRITICAL: You MUST use at least 5-8 relevant emojis (like 🧠, 🔬, 🚀, 📦, 👉, 📊) throughout your response. Use BOLD headers and bullet points for a premium look! 💎"
             },
             {
                 role: "user",
@@ -113,8 +113,91 @@ class RAGPipeline {
         return { answer, sources };
     }
 
-    async *queryStream(queryText, history = [], user = null) {
+    async *queryStream(queryText, history = [], user = null, model = 'rag') {
         const startTime = Date.now();
+
+        // ROUTE: Fine-tuned Qwen Model (via Hugging Face Space llama.cpp API)
+        if (model === 'finetuned') {
+            console.log("DEBUG: Routing to Fine-tuned Qwen Model API...");
+            const apiUrl = process.env.FINETUNED_API_URL || 'http://localhost:8001/v1/chat/completions';
+            
+            try {
+                yield `data: ${JSON.stringify({ type: 'sources', sources: [] })}\n\n`;
+
+                const system_prompt = "You are a BRILLIANT and SUPER FRIENDLY Materials Science Expert! 🧠✨ Your goal is to provide helpful, detailed, and encouraging scientific answers. CRITICAL: You MUST use many relevant emojis (like 🔬, 🧪, 🚀, 👉, 🌟, 🧠) throughout your response. Structure your answers with BOLD headers and bullet points! 💎";
+                
+                const recentHistory = history.slice(-4); // Only keep the last 4 messages
+                const fetchMessages = [
+                    { role: "system", content: system_prompt },
+                    ...recentHistory
+                        .map(msg => ({ role: msg.role || "user", content: msg.content || "" }))
+                        .filter(msg => msg.content.trim() !== ""),
+                    { role: "user", content: queryText }
+                ];
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        model: "qwen2.5-0.5b",
+                        messages: fetchMessages,
+                        stream: true,
+                        temperature: 0.7,
+                        max_tokens: 512
+                    })
+                });
+
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(`API error: ${response.status}. Details: ${errText}`);
+                }
+                
+                // Read the stream
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let done = false;
+                let buffer = "";
+
+                while (!done) {
+                    const { value, done: readerDone } = await reader.read();
+                    done = readerDone;
+                    if (value) {
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop(); // keep the last potentially incomplete line in buffer
+
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                const dataStr = line.replace('data: ', '').trim();
+                                if (dataStr === '[DONE]') continue;
+                                if (!dataStr) continue;
+                                try {
+                                    const data = JSON.parse(dataStr);
+                                    if (data.choices && data.choices.length > 0) {
+                                        const delta = data.choices[0].delta.content || "";
+                                        if (delta) {
+                                            yield `data: ${JSON.stringify({ type: 'chunk', content: delta })}\n\n`;
+                                        }
+                                    }
+                                } catch (err) {
+                                    // ignore parse errors for incomplete chunks
+                                }
+                            }
+                        }
+                    }
+                }
+
+                yield `data: ${JSON.stringify({ type: 'done' })}\n\n`;
+                return;
+            } catch (e) {
+                console.error("Fine-tuned API failed:", e);
+                yield `data: ${JSON.stringify({ type: 'chunk', content: `*(Error: ${e.message}. Please ensure the HF Space API is running at ${apiUrl})*` })}\n\n`;
+                yield `data: ${JSON.stringify({ type: 'done' })}\n\n`;
+                return;
+            }
+        }
+
+        // DEFAULT: RAG Pipeline logic
         const greetings = ["hello", "hi", "hey", "hola", "greetings", "good morning", "good afternoon", "good evening"];
         const queryLower = queryText.toLowerCase().trim();
         const isGreeting = greetings.some(g => queryLower === g || queryLower.startsWith(g + ' ') || queryLower.startsWith(g + ','));
@@ -158,9 +241,9 @@ class RAGPipeline {
                 });
                 sources = [...new Set(rawSources)].sort();
             } catch (e) {
-                console.log(`❌ Error during similarity search: ${e.message}`);
-                yield `data: ${JSON.stringify({ type: 'chunk', content: `*(Error during search: ${e.message})*` })}\n\n`;
-                context = "No context available due to search error.";
+                console.error(`❌ Error during similarity search (HF/Pinecone): ${e.message}`);
+                // Don't yield technical errors to the user, just fallback to internal knowledge
+                context = "Context unavailable due to a temporary search error.";
                 sources = [];
             }
         }
@@ -170,11 +253,16 @@ class RAGPipeline {
         const messages = [
             {
                 role: "system",
-                content: "You are a professional, accurate, and concise expert Material Scientist assistant. 🔬 Your goal is to provide high-quality scientific information.\n\nSTRICT RULES:\n1. If the provided context is relevant, use it to formulate your answer. Focus on factual accuracy.\n2. If the user's question is a simple greeting, respond naturally and professionally without referencing scientific context unless asked.\n3. Never mention whether the information came from a document or your own knowledge.\n4. Use LaTeX for math/chemistry: `$formula$` for inline, `$$formula$$` for blocks.\n5. For images, use Markdown ONLY: `![Description](https://dummyimage.com/800x400/202123/ffffff&text=description+with+plus+signs)` (replace spaces with +).\n6. Maintain a professional tone. Use formatting (tables, bold text, lists) for clarity, and use emojis sparingly only when appropriate for technical emphasis 🚀." + userGreeting
-            },
-            {
-                role: "system",
-                content: `Here is the retrieved scientific context:\n${context}`
+                content: `You are a BRILLIANT and SUPER FRIENDLY expert Material Scientist! 🧠✨ Your goal is to make complex scientific concepts feel exciting and easy to understand.
+
+CRITICAL INSTRUCTIONS:
+1. MANDATORY EMOJIS: You MUST use at least 5-8 relevant emojis (like 🧠, 🔬, 🚀, 📦, 👉, ✨, 🧪, 📊) throughout your response to keep it interactive and friendly! 🌟
+2. BE INTERACTIVE: Use a warm, enthusiastic, and encouraging tone.
+3. PREMIUM FORMATTING: Use BOLD headers, bullet points, and tables to structure your answers beautifully.
+4. SCIENTIFIC CONTEXT: Here is the retrieved context to help you:
+${context}
+
+Always respond in a way that feels premium, helpful, and alive! 💎` + userGreeting
             }
         ];
 
