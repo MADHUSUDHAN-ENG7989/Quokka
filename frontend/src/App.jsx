@@ -104,8 +104,8 @@ function App() {
   const [showModelMenu, setShowModelMenu] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showSearch, setShowSearch] = useState(false);
-  const [showProjectsModal, setShowProjectsModal] = useState(false);
-  const [showCodexModal, setShowCodexModal] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showApiModal, setShowApiModal] = useState(false);
   const modelMenuRef = useRef(null);
 
   // Close dropdown when clicking outside
@@ -585,8 +585,8 @@ function App() {
     <div className="browser-layout">
       <AnimatePresence>
         {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
-        {showProjectsModal && <ProjectsModal onClose={() => setShowProjectsModal(false)} />}
-        {showCodexModal && <CodexModal onClose={() => setShowCodexModal(false)} />}
+        {showStatusModal && <StatusModal onClose={() => setShowStatusModal(false)} />}
+        {showApiModal && <ApiModal onClose={() => setShowApiModal(false)} />}
       </AnimatePresence>
       {/* Vertical Browser Sidebar */}
       <aside className="browser-sidebar">
@@ -600,14 +600,20 @@ function App() {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             <span>Search chats</span>
           </button>
-          <button className="sidebar-top-btn" onClick={() => setShowProjectsModal(true)}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-            <span>Projects</span>
+          <button className="sidebar-top-btn" onClick={() => setShowStatusModal(true)}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            <span>System Status</span>
           </button>
-          <button className="sidebar-top-btn" onClick={() => setShowCodexModal(true)}>
+          <button className="sidebar-top-btn" onClick={() => setShowApiModal(true)}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-            <span>Codex</span>
+            <span>API Reference</span>
           </button>
+          {user?.role === 'admin' && (
+            <button className="sidebar-top-btn" onClick={() => setShowAdmin(true)}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="21" x2="9" y2="9"/><line x1="3" y1="9" x2="21" y2="9"/></svg>
+              <span>Admin Panel</span>
+            </button>
+          )}
           <button className="sidebar-top-btn" onClick={clearAllWindows} title="Clear All Sessions">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
             <span>Clear Chats</span>
@@ -973,34 +979,38 @@ function App() {
 
 export default App;
 
-// Premium Projects Modal
-function ProjectsModal({ onClose }) {
-  const projects = [
-    { name: "Silicon Anodes Optimization", status: "Active", description: "Enhancing structural cycle life of silicon-carbon nanostructured composite batteries." },
-    { name: "Graphene Oxide Supercapacitors", status: "Completed", description: "Analyzing thermal reduction of graphene oxide for ultra-high energy storage." },
-    { name: "Solid-State Polymer Electrolytes", status: "Active", description: "Formulating high ionic conductivity polymer-ceramic matrix solid electrolytes." }
+// Premium Status Modal
+function StatusModal({ onClose }) {
+  const systems = [
+    { name: "Hugging Face Model Space", status: "Operational", desc: "Fine-tuned Qwen 0.5B adapter CPU inference endpoint." },
+    { name: "Qdrant Cloud DB Cluster", status: "Operational", desc: "Cloud vector database and Live RAG indexer." },
+    { name: "Groq LLM Coordinator", status: "Operational", desc: "Consensus synthesis coordinator (llama-3.1-8b-instant)." },
+    { name: "Pinecone Textbook Indexes", status: "Operational", desc: "Static materials science textbook RAG vector index." }
   ];
 
   return (
     <div className="auth-overlay" onClick={onClose}>
-      <div className="auth-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+      <div className="auth-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
         <div className="auth-header">
-          <h2>Active Research Projects</h2>
+          <h2>Quokka System Health</h2>
           <button className="auth-close" onClick={onClose}>×</button>
         </div>
         <p style={{ color: 'var(--text-tertiary)', fontSize: '13px', marginBottom: '16px' }}>
-          Select or manage active materials science project workspaces.
+          Real-time service health and orchestration status of all integrated materials science nodes.
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {projects.map((proj, idx) => (
-            <div key={idx} style={{ background: 'var(--bg-hover)', border: '1px solid var(--border-dim)', padding: '12px', borderRadius: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <strong style={{ color: 'var(--text-primary)', fontSize: '14px' }}>{proj.name}</strong>
-                <span style={{ fontSize: '11px', color: proj.status === 'Active' ? 'var(--accent-cyan)' : 'var(--text-tertiary)', background: 'rgba(0,0,0,0.2)', padding: '2px 8px', borderRadius: '10px' }}>
-                  {proj.status}
-                </span>
+          {systems.map((sys, idx) => (
+            <div key={idx} style={{ background: 'var(--bg-hover)', border: '1px solid var(--border-dim)', padding: '12px', borderRadius: '8px', display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#00cc66', boxShadow: '0 0 8px #00cc66' }}></div>
+              <div style={{ flexGrow: 1 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                  <strong style={{ color: 'var(--text-primary)', fontSize: '14px' }}>{sys.name}</strong>
+                  <span style={{ fontSize: '11px', color: '#00cc66', background: 'rgba(0, 204, 102, 0.1)', padding: '2px 8px', borderRadius: '10px', fontWeight: 'bold' }}>
+                    {sys.status}
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: '11.5px', color: 'var(--text-secondary)' }}>{sys.desc}</p>
               </div>
-              <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)' }}>{proj.description}</p>
             </div>
           ))}
         </div>
@@ -1012,30 +1022,53 @@ function ProjectsModal({ onClose }) {
   );
 }
 
-// Premium Codex Modal
-function CodexModal({ onClose }) {
-  const scientificConstants = [
-    { symbol: "Si (Silicon)", value: "Atomic Weight: 28.0855 u, Density: 2.3290 g/cm³, Group: 14" },
-    { symbol: "C (Graphite)", value: "Atomic Weight: 12.011 u, Density: 2.26 g/cm³, Group: 14" },
-    { symbol: "SiO₂ (Quartz)", value: "Molar Mass: 60.08 g/mol, Melting Point: 1713 °C" },
-    { symbol: "Li (Lithium)", value: "Atomic Weight: 6.94 u, Standard Capacity: 3860 mAh/g" }
+// Premium ApiModal
+function ApiModal({ onClose }) {
+  const [copiedIndex, setCopiedIndex] = useState(null);
+
+  const snippets = [
+    {
+      lang: "Python SDK",
+      code: `import requests\n\nurl = "https://quokka-backend.render.com/api/chat_stream"\npayload = {\n    "query": "What is the atomic weight of silicon?",\n    "model": "hybrid"\n}\nres = requests.post(url, json=payload, stream=True)\nfor chunk in res.iter_lines():\n    print(chunk.decode())`
+    },
+    {
+      lang: "cURL CLI",
+      code: `curl -X POST https://quokka-backend.render.com/api/chat_stream \\\n  -H "Content-Type: application/json" \\\n  -d '{"query": "What is silicon?", "model": "qdrant"}'`
+    }
   ];
+
+  const handleCopy = (code, index) => {
+    navigator.clipboard.writeText(code);
+    setCopiedIndex(index);
+    setTimeout(() => setCopiedIndex(null), 2000);
+  };
 
   return (
     <div className="auth-overlay" onClick={onClose}>
-      <div className="auth-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+      <div className="auth-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '550px' }}>
         <div className="auth-header">
-          <h2>Scientific Codex Reference</h2>
+          <h2>API Reference & Integration</h2>
           <button className="auth-close" onClick={onClose}>×</button>
         </div>
         <p style={{ color: 'var(--text-tertiary)', fontSize: '13px', marginBottom: '16px' }}>
-          Specialized Materials Science constants and properties library.
+          Integrate Quokka's specialized RAG synthesis API directly into your materials science notebooks.
         </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {scientificConstants.map((constant, idx) => (
-            <div key={idx} style={{ background: 'var(--bg-hover)', border: '1px solid var(--border-dim)', padding: '12px', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <strong style={{ color: 'var(--accent-cyan)', fontSize: '13.5px' }}>{constant.symbol}</strong>
-              <span style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{constant.value}</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {snippets.map((snip, idx) => (
+            <div key={idx}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--accent-cyan)' }}>{snip.lang}</span>
+                <button 
+                  onClick={() => handleCopy(snip.code, idx)}
+                  style={{ background: 'transparent', border: 'none', color: 'var(--text-tertiary)', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+                  {copiedIndex === idx ? "Copied!" : "Copy"}
+                </button>
+              </div>
+              <pre style={{ margin: 0, padding: '12px', background: 'var(--bg-hover)', border: '1px solid var(--border-dim)', borderRadius: '8px', fontSize: '11px', overflowX: 'auto', fontFamily: 'monospace', color: 'var(--text-primary)', whiteSpace: 'pre-wrap' }}>
+                {snip.code}
+              </pre>
             </div>
           ))}
         </div>
