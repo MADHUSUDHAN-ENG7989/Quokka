@@ -1189,7 +1189,7 @@ function BillingModal({ onClose }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ background: 'rgba(0,204,102,0.05)', border: '1px solid rgba(0,204,102,0.2)', padding: '16px', borderRadius: '8px', textAlign: 'center' }}>
               <span style={{ fontSize: '11px', color: '#00cc66', background: 'rgba(0,204,102,0.1)', padding: '2px 8px', borderRadius: '10px', fontWeight: 'bold' }}>
-                FREE ACCOUNT
+                PREMIUM PLAN
               </span>
               <h3 style={{ margin: '12px 0 6px 0', color: 'var(--text-primary)', fontSize: '20px' }}>$29.00 <span style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>/ month</span></h3>
               <p style={{ margin: 0, fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
