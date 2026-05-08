@@ -7,6 +7,7 @@ const { liveRag } = require('./live-rag');
 const { hybridRag } = require('./hybrid-rag');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
+const paymentRoutes = require('./routes/payment');
 const { softAuth, verifyToken, requireAdmin } = require('./middleware/auth');
 const ChatSession = require('./models/ChatSession');
 
@@ -26,6 +27,9 @@ app.get('/', (req, res) => res.json({ message: "Welcome to the Quokka RAG Backen
 
 // Auth routes (public)
 app.use('/api/auth', authRoutes);
+
+// Payment routes (protected)
+app.use('/api/payment', paymentRoutes);
 
 // Admin routes (protected: must be logged in + admin role)
 app.use('/api/admin', verifyToken, requireAdmin, adminRoutes);

@@ -1093,32 +1093,101 @@ function BillingModal({ onClose }) {
     return saved ? JSON.parse(saved) : null;
   });
 
+  const loadScript = (src) => {
+    return new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handleSubscribe = async () => {
     setIsProcessing(true);
-    // Simulate premium payment processing spinner
-    setTimeout(async () => {
-      try {
-        const token = localStorage.getItem('quokka_token');
-        const res = await fetch(`${API}/api/auth/subscribe`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const data = await res.json();
-        if (data.success) {
-          const updatedUser = { ...localUser, isSubscribed: true, apiKey: data.apiKey };
-          localStorage.setItem('quokka_user', JSON.stringify(updatedUser));
-          setLocalUser(updatedUser);
-          window.location.reload(); 
+    const scriptLoaded = await loadScript('https://checkout.razorpay.com/v1/checkout.js');
+    if (!scriptLoaded) {
+      alert("Razorpay SDK failed to load. Please check your internet connection.");
+      setIsProcessing(false);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('quokka_token');
+      // 1. Create a Razorpay Order on the backend
+      const res = await fetch(`${API}/api/payment/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         }
-      } catch (err) {
-        console.error("Subscription error:", err);
-      } finally {
+      });
+      const order = await res.json();
+      if (order.error) {
+        alert(order.error);
         setIsProcessing(false);
+        return;
       }
-    }, 2500);
+
+      // 2. Open the Razorpay Checkout Modal
+      const options = {
+        key: "rzp_test_SlYQsdChlM0l0M", // Exact same key ID as e-commerce app
+        amount: order.amount,
+        currency: order.currency,
+        name: "Quokka Materials",
+        description: "Quokka Premium API Subscription",
+        image: "https://quokka-xzwh.onrender.com/favicon.ico",
+        order_id: order.id,
+        handler: async function (response) {
+          try {
+            setIsProcessing(true);
+            // 3. Verify Payment Signature on the Backend
+            const verifyRes = await fetch(`${API}/api/payment/verify`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
+              })
+            });
+            const data = await verifyRes.json();
+            if (data.success) {
+              const updatedUser = { ...localUser, isSubscribed: true, apiKey: data.apiKey };
+              localStorage.setItem('quokka_user', JSON.stringify(updatedUser));
+              setLocalUser(updatedUser);
+              alert("Payment Successful! Your Quokka Premium Subscription is now Active.");
+              window.location.reload();
+            } else {
+              alert("Signature verification failed. Please contact support.");
+            }
+          } catch (err) {
+            console.error("Verification error:", err);
+            alert("Verification server error.");
+          } finally {
+            setIsProcessing(false);
+          }
+        },
+        prefill: {
+          name: localUser.name || "Customer",
+          email: localUser.email || "customer@example.com",
+        },
+        theme: {
+          color: "#00cc66" // Premium Green
+        }
+      };
+
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.open();
+    } catch (err) {
+      console.error("Subscription initiate error:", err);
+      alert("Failed to initiate secure checkout.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleRegenerateKey = async () => {
