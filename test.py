@@ -7,7 +7,11 @@ payload = {
     "model": "hybrid"
 }
 
-res = requests.post(url, json=payload, stream=True)
+headers = {
+    "x-api-key": "qk_your_api_key_here"  # Get this from your profile billing workspace
+}
+
+res = requests.post(url, json=payload, headers=headers, stream=True)
 for line in res.iter_lines():
     if line:
         decoded_line = line.decode('utf-8')
