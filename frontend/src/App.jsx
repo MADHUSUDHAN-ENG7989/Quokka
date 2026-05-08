@@ -102,6 +102,10 @@ function App() {
 
   const [selectedModel, setSelectedModel] = useState('rag'); // 'rag', 'qdrant', or 'finetuned'
   const [showModelMenu, setShowModelMenu] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
+  const [showProjectsModal, setShowProjectsModal] = useState(false);
+  const [showCodexModal, setShowCodexModal] = useState(false);
   const modelMenuRef = useRef(null);
 
   // Close dropdown when clicking outside
@@ -577,6 +581,8 @@ function App() {
     <div className="browser-layout">
       <AnimatePresence>
         {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+        {showProjectsModal && <ProjectsModal onClose={() => setShowProjectsModal(false)} />}
+        {showCodexModal && <CodexModal onClose={() => setShowCodexModal(false)} />}
       </AnimatePresence>
       {/* Vertical Browser Sidebar */}
       <aside className="browser-sidebar">
@@ -586,15 +592,15 @@ function App() {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
             <span>New chat</span>
           </button>
-          <button className="sidebar-top-btn" onClick={() => {}}>
+          <button className={`sidebar-top-btn ${showSearch ? 'active' : ''}`} onClick={() => { setShowSearch(!showSearch); if (showSearch) setSearchTerm(''); }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             <span>Search chats</span>
           </button>
-          <button className="sidebar-top-btn" onClick={() => {}}>
+          <button className="sidebar-top-btn" onClick={() => setShowProjectsModal(true)}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
             <span>Projects</span>
           </button>
-          <button className="sidebar-top-btn" onClick={() => {}}>
+          <button className="sidebar-top-btn" onClick={() => setShowCodexModal(true)}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
             <span>Codex</span>
           </button>
@@ -604,11 +610,29 @@ function App() {
           </button>
         </div>
 
+        {showSearch && (
+          <div className="sidebar-search-container">
+            <input 
+              type="text" 
+              className="sidebar-search-input" 
+              placeholder="Filter chats by title..." 
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value)}
+              autoFocus
+            />
+            {searchTerm && (
+              <button className="clear-search-btn" onClick={() => setSearchTerm('')}>×</button>
+            )}
+          </div>
+        )}
+
         <div className="recents-header">Recents</div>
 
         <div className="window-tabs">
           <AnimatePresence>
-            {windows.map(win => (
+            {windows
+              .filter(win => win.title.toLowerCase().includes(searchTerm.toLowerCase()))
+              .map(win => (
               <motion.div
                 key={win.id}
                 layout
@@ -944,3 +968,77 @@ function App() {
 }
 
 export default App;
+
+// Premium Projects Modal
+function ProjectsModal({ onClose }) {
+  const projects = [
+    { name: "Silicon Anodes Optimization", status: "Active", description: "Enhancing structural cycle life of silicon-carbon nanostructured composite batteries." },
+    { name: "Graphene Oxide Supercapacitors", status: "Completed", description: "Analyzing thermal reduction of graphene oxide for ultra-high energy storage." },
+    { name: "Solid-State Polymer Electrolytes", status: "Active", description: "Formulating high ionic conductivity polymer-ceramic matrix solid electrolytes." }
+  ];
+
+  return (
+    <div className="auth-overlay" onClick={onClose}>
+      <div className="auth-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+        <div className="auth-header">
+          <h2>Active Research Projects</h2>
+          <button className="auth-close" onClick={onClose}>×</button>
+        </div>
+        <p style={{ color: 'var(--text-tertiary)', fontSize: '13px', marginBottom: '16px' }}>
+          Select or manage active materials science project workspaces.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {projects.map((proj, idx) => (
+            <div key={idx} style={{ background: 'var(--bg-hover)', border: '1px solid var(--border-dim)', padding: '12px', borderRadius: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <strong style={{ color: 'var(--text-primary)', fontSize: '14px' }}>{proj.name}</strong>
+                <span style={{ fontSize: '11px', color: proj.status === 'Active' ? 'var(--accent-cyan)' : 'var(--text-tertiary)', background: 'rgba(0,0,0,0.2)', padding: '2px 8px', borderRadius: '10px' }}>
+                  {proj.status}
+                </span>
+              </div>
+              <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)' }}>{proj.description}</p>
+            </div>
+          ))}
+        </div>
+        <button className="auth-submit-btn" onClick={onClose} style={{ marginTop: '20px' }}>
+          Close Panel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Premium Codex Modal
+function CodexModal({ onClose }) {
+  const scientificConstants = [
+    { symbol: "Si (Silicon)", value: "Atomic Weight: 28.0855 u, Density: 2.3290 g/cm³, Group: 14" },
+    { symbol: "C (Graphite)", value: "Atomic Weight: 12.011 u, Density: 2.26 g/cm³, Group: 14" },
+    { symbol: "SiO₂ (Quartz)", value: "Molar Mass: 60.08 g/mol, Melting Point: 1713 °C" },
+    { symbol: "Li (Lithium)", value: "Atomic Weight: 6.94 u, Standard Capacity: 3860 mAh/g" }
+  ];
+
+  return (
+    <div className="auth-overlay" onClick={onClose}>
+      <div className="auth-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+        <div className="auth-header">
+          <h2>Scientific Codex Reference</h2>
+          <button className="auth-close" onClick={onClose}>×</button>
+        </div>
+        <p style={{ color: 'var(--text-tertiary)', fontSize: '13px', marginBottom: '16px' }}>
+          Specialized Materials Science constants and properties library.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {scientificConstants.map((constant, idx) => (
+            <div key={idx} style={{ background: 'var(--bg-hover)', border: '1px solid var(--border-dim)', padding: '12px', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <strong style={{ color: 'var(--accent-cyan)', fontSize: '13.5px' }}>{constant.symbol}</strong>
+              <span style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{constant.value}</span>
+            </div>
+          ))}
+        </div>
+        <button className="auth-submit-btn" onClick={onClose} style={{ marginTop: '20px' }}>
+          Close Panel
+        </button>
+      </div>
+    </div>
+  );
+}

@@ -916,6 +916,46 @@
   background-color: var(--bg-card);
 }
 
+/* Sidebar Search Styling */
+.sidebar-search-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: calc(100% - 16px);
+  margin-top: 4px;
+}
+
+.sidebar-search-input {
+  width: 100%;
+  padding: 8px 32px 8px 12px;
+  background-color: var(--bg-hover);
+  border: 1.5px solid var(--border-dim);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.sidebar-search-input:focus {
+  border-color: var(--accent-cyan);
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  font-size: 16px;
+  cursor: pointer;
+  outline: none;
+}
+
+.clear-search-btn:hover {
+  color: var(--text-primary);
+}
+
 /* Recents Header styling */
 .recents-header {
   font-size: 11px;
