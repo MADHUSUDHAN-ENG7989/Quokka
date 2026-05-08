@@ -17,7 +17,7 @@ router.post('/orders', verifyToken, async (req, res) => {
         const options = {
             amount: 2400 * 100, // ₹2400 INR in paise (approx $29 USD)
             currency: 'INR',
-            receipt: 'receipt_sub_' + req.user.id + '_' + Date.now(),
+            receipt: 'rcpt_' + Date.now(),
         };
 
         const order = await razorpay.orders.create(options);
