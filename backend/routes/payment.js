@@ -6,8 +6,8 @@ const { verifyToken } = require('../middleware/auth');
 const User = require('../models/User');
 
 const razorpay = new Razorpay({
-    key_id: (process.env.RAZORPAY_KEY_ID || 'rzp_test_SlYQsdChlM0l0M').replace(/['"]/g, ''),
-    key_secret: (process.env.RAZORPAY_KEY_SECRET || '2dDfZEqX7qWUp9SvDRnL6cOr').replace(/['"]/g, ''),
+    key_id: (process.env.RAZORPAY_KEY_ID || 'rzp_test_SlYQsdChlM0l0M').replace(/['"]/g, '').trim(),
+    key_secret: (process.env.RAZORPAY_KEY_SECRET || '2dDfZEqX7qWUp9SvDRnL6cOr').replace(/['"]/g, '').trim(),
 });
 
 // @route   POST /api/payment/orders
@@ -38,7 +38,7 @@ router.post('/verify', verifyToken, async (req, res) => {
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
         const body = razorpay_order_id + "|" + razorpay_payment_id;
-        const secret = (process.env.RAZORPAY_KEY_SECRET || '2dDfZEqX7qWUp9SvDRnL6cOr').replace(/['"]/g, '');
+        const secret = (process.env.RAZORPAY_KEY_SECRET || '2dDfZEqX7qWUp9SvDRnL6cOr').replace(/['"]/g, '').trim();
         const expectedSignature = crypto
             .createHmac('sha256', secret)
             .update(body.toString())
