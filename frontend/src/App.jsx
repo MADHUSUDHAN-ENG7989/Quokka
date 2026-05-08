@@ -580,13 +580,32 @@ function App() {
       </AnimatePresence>
       {/* Vertical Browser Sidebar */}
       <aside className="browser-sidebar">
-        <div className="sidebar-top">
-          <div className="sidebar-actions">
-            <button className="sidebar-action-icon" onClick={clearAllWindows} title="Clear All Sessions">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-            </button>
-          </div>
+        {/* ChatGPT Style Navigation Section */}
+        <div className="sidebar-navigation">
+          <button className="sidebar-top-btn" onClick={createNewWindow}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span>New chat</span>
+          </button>
+          <button className="sidebar-top-btn" onClick={() => {}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <span>Search chats</span>
+          </button>
+          <button className="sidebar-top-btn" onClick={() => {}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <span>Projects</span>
+          </button>
+          <button className="sidebar-top-btn" onClick={() => {}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            <span>Codex</span>
+          </button>
+          <button className="sidebar-top-btn" onClick={clearAllWindows} title="Clear All Sessions">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+            <span>Clear Chats</span>
+          </button>
         </div>
+
+        <div className="recents-header">Recents</div>
+
         <div className="window-tabs">
           <AnimatePresence>
             {windows.map(win => (
@@ -641,10 +660,32 @@ function App() {
               </motion.div>
             ))}
           </AnimatePresence>
-          <button className="new-window-btn" onClick={createNewWindow} title="New Window">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-            <span className="btn-label">New Chat</span>
-          </button>
+        </div>
+
+        {/* Account Profile Dashboard section */}
+        <div className="sidebar-profile">
+          {user ? (
+            <div className="profile-container" onClick={() => { if (user.role === 'admin') setShowAdmin(true); }}>
+              <div className="profile-avatar">
+                {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+              </div>
+              <div className="profile-info">
+                <span className="profile-name">{user.name || user.email}</span>
+                <span className="profile-sub">{user.role === 'admin' ? 'Administrator' : 'Premium Member'}</span>
+              </div>
+              <button className="logout-btn" onClick={(e) => { e.stopPropagation(); logout(); }} title="Log Out">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+              </button>
+            </div>
+          ) : (
+            <div className="profile-container guest" onClick={() => setShowAuth(true)}>
+              <div className="profile-avatar guest">G</div>
+              <div className="profile-info">
+                <span className="profile-name">Guest Session</span>
+                <span className="profile-sub">Sign in for history persistence</span>
+              </div>
+            </div>
+          )}
         </div>
       </aside>
 
