@@ -1317,7 +1317,46 @@ function BillingModal({ onClose }) {
               </div>
             </div>
             <button className="auth-submit-btn" onClick={handleSubscribe} style={{ background: '#00cc66', color: '#fff', border: 'none', marginTop: '10px' }}>
-              Subscribe & Generate API Key
+              💳 Pay with Razorpay (Test Mode)
+            </button>
+            <button 
+              className="auth-submit-btn" 
+              onClick={async () => {
+                try {
+                  setIsProcessing(true);
+                  const token = localStorage.getItem('quokka_token');
+                  const verifyRes = await fetch(`${API}/api/payment/verify`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                      razorpay_order_id: 'order_sand_' + Math.random().toString(36).substring(2, 15),
+                      razorpay_payment_id: 'pay_sand_' + Math.random().toString(36).substring(2, 10),
+                      razorpay_signature: 'sig_sand_' + Math.random().toString(36).substring(2, 15)
+                    })
+                  });
+                  const data = await verifyRes.json();
+                  if (data.success) {
+                    const updatedUser = { ...localUser, isSubscribed: true, apiKey: data.apiKey };
+                    localStorage.setItem('quokka_user', JSON.stringify(updatedUser));
+                    setLocalUser(updatedUser);
+                    alert("🎉 Account Activated Instantly in Developer Sandbox Mode!");
+                    window.location.reload();
+                  } else {
+                    alert("Fast Activation failed.");
+                  }
+                } catch (e) {
+                  console.error(e);
+                  alert("Fast Activation error.");
+                } finally {
+                  setIsProcessing(false);
+                }
+              }} 
+              style={{ background: 'rgba(0,180,216,0.15)', color: 'var(--accent-cyan)', border: '1px solid var(--accent-cyan)', marginTop: '8px' }}
+            >
+              ⚡ Fast One-Click Sandbox Activation
             </button>
           </div>
         ) : (
