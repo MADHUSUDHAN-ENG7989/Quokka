@@ -680,6 +680,13 @@ function App() {
 
   return (
     <div className="browser-layout">
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        style={{ display: 'none' }} 
+        accept=".pdf,.txt,.md" 
+        onChange={handleFileChange} 
+      />
       <AnimatePresence>
         {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
         {showStatusModal && <StatusModal onClose={() => setShowStatusModal(false)} />}
@@ -958,13 +965,6 @@ function App() {
               transition={{ duration: 0.5 }}
               style={{ flexDirection: 'column', gap: '32px', height: '100%', justifyContent: 'center' }}
             >
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                style={{ display: 'none' }} 
-                accept=".pdf,.txt,.md" 
-                onChange={handleFileChange} 
-              />
               <div className="empty-logo">
                 <motion.svg 
                   width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
@@ -1072,7 +1072,7 @@ function App() {
 
         <div className="input-area">
           <form className="input-form" onSubmit={handleSubmit}>
-            <button type="button" className="attach-btn" title="Attach file">
+            <button type="button" className="attach-btn" title="Attach file" onClick={handleTriggerSummarize}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
             </button>
             <textarea
