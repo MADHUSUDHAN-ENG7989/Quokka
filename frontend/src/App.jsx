@@ -111,6 +111,9 @@ function App() {
   const [showUploadMenu, setShowUploadMenu] = useState(false);
   const uploadMenuRef = useRef(null);
   const [attachedFile, setAttachedFile] = useState(null);
+  const [isListening, setIsListening] = useState(false);
+  const [speakingMessageId, setSpeakingMessageId] = useState(null);
+  const recognitionRef = useRef(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -125,6 +128,104 @@ function App() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Initialize Speech Recognition
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const rec = new SpeechRecognition();
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.lang = 'en-US';
+
+      rec.onresult = (event) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+
+        const transcript = finalTranscript || interimTranscript;
+        if (transcript.trim()) {
+          setInput(prev => {
+            if (prev.trim()) {
+              return prev.trim() + ' ' + transcript;
+            }
+            return transcript;
+          });
+        }
+      };
+
+      rec.onerror = (err) => {
+        console.error("Speech Recognition Error:", err);
+        setIsListening(false);
+      };
+
+      rec.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = rec;
+    }
+  }, []);
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      alert("Speech recognition is not supported in this browser. Try Google Chrome!");
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (err) {
+        console.error("Failed to start speech recognition:", err);
+      }
+    }
+  };
+
+  const readAloud = (msgId, text) => {
+    if (!window.speechSynthesis) {
+      alert("Text-to-speech is not supported in this browser.");
+      return;
+    }
+
+    if (speakingMessageId === msgId) {
+      window.speechSynthesis.cancel();
+      setSpeakingMessageId(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    
+    const cleanText = text
+      .replace(/[*_#`~>]/g, '')
+      .replace(/\[.*?\]\(.*?\)/g, '')
+      .substring(0, 1000);
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = 'en-US';
+    
+    utterance.onend = () => {
+      setSpeakingMessageId(null);
+    };
+
+    utterance.onerror = () => {
+      setSpeakingMessageId(null);
+    };
+
+    setSpeakingMessageId(msgId);
+    window.speechSynthesis.speak(utterance);
+  };
 
   const [input, setInput] = useState('');
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
@@ -1078,6 +1179,18 @@ function App() {
                           ))}
                         </div>
                       )}
+                      <button 
+                        className={`copy-msg-btn ${speakingMessageId === (msg._id || index) ? 'speaking' : ''}`} 
+                        onClick={() => readAloud(msg._id || index, msg.content)} 
+                        title={speakingMessageId === (msg._id || index) ? "Stop reading" : "Read aloud"}
+                        style={{ marginRight: '6px' }}
+                      >
+                        {speakingMessageId === (msg._id || index) ? (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2" /></svg>
+                        ) : (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" /></svg>
+                        )}
+                      </button>
                       <button className="copy-msg-btn" onClick={() => copyToClipboard(msg.content)} title="Copy to Clipboard">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
                       </button>
@@ -1173,15 +1286,30 @@ function App() {
               onClick={() => { if (isLimitReached) setShowAuth(true); }}
               autoFocus
             />
-            {input.trim() ? (
-              <button type="submit" className="send-btn active" disabled={activeWindow.isLoading}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 2L11 13" /><path d="M22 2L15 22L11 13L2 9L22 2z" /></svg>
+            <div className="chat-controls-right" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button 
+                type="button" 
+                className={`voice-btn ${isListening ? 'listening' : ''}`} 
+                onClick={toggleListening}
+                disabled={activeWindow.isLoading}
+                title={isListening ? "Stop listening" : "Start voice input"}
+              >
+                {isListening ? (
+                  <span className="voice-wave-container">
+                    <span className="voice-wave-bar"></span>
+                    <span className="voice-wave-bar"></span>
+                    <span className="voice-wave-bar"></span>
+                  </span>
+                ) : (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
+                )}
               </button>
-            ) : (
-              <button type="button" className="voice-btn" disabled={activeWindow.isLoading}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
-              </button>
-            )}
+              {input.trim() && (
+                <button type="submit" className="send-btn active" disabled={activeWindow.isLoading}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 2L11 13" /><path d="M22 2L15 22L11 13L2 9L22 2z" /></svg>
+                </button>
+              )}
+            </div>
           </form>
           <div className="legal-footer">
             Quokka can make mistakes. Check important info. See <a href="#">Cookie Preferences</a>.
