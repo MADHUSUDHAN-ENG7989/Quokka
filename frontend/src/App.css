@@ -1172,3 +1172,86 @@
 .suggestion-card:hover .suggestion-desc {
   color: var(--text-secondary);
 }
+
+/* Premium Upload Popover Menu */
+.upload-popover {
+  position: absolute;
+  bottom: 44px;
+  left: 0;
+  width: 320px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 100;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.upload-popover-header {
+  padding: 12px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-tertiary);
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.upload-popover-options {
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+}
+
+.upload-popover-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.upload-popover-option:hover {
+  background-color: var(--bg-hover);
+}
+
+.popover-option-icon {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+}
+
+.upload-popover-option:hover .popover-option-icon {
+  background-color: rgba(0, 242, 254, 0.15);
+  transform: scale(1.05);
+}
+
+.popover-option-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.popover-option-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.popover-option-desc {
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  line-height: 1.3;
+}

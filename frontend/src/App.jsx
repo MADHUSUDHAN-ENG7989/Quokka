@@ -108,12 +108,17 @@ function App() {
   const [showApiModal, setShowApiModal] = useState(false);
   const [showBillingModal, setShowBillingModal] = useState(false);
   const modelMenuRef = useRef(null);
+  const [showUploadMenu, setShowUploadMenu] = useState(false);
+  const uploadMenuRef = useRef(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (modelMenuRef.current && !modelMenuRef.current.contains(event.target)) {
         setShowModelMenu(false);
+      }
+      if (uploadMenuRef.current && !uploadMenuRef.current.contains(event.target)) {
+        setShowUploadMenu(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -149,12 +154,20 @@ function App() {
     setShouldAutoScroll(isAtBottom);
   };
 
+  const triggerUpload = (acceptType) => {
+    if (fileInputRef.current) {
+      fileInputRef.current.accept = acceptType;
+      fileInputRef.current.click();
+    }
+    setShowUploadMenu(false);
+  };
+
   const handleTriggerSummarize = () => {
     if (isLimitReached) {
       setShowAuth(true);
       return;
     }
-    fileInputRef.current?.click();
+    triggerUpload('.pdf,.txt,.md');
   };
 
   const handleFileChange = async (e) => {
@@ -1072,9 +1085,52 @@ function App() {
 
         <div className="input-area">
           <form className="input-form" onSubmit={handleSubmit}>
-            <button type="button" className="attach-btn" title="Attach file" onClick={handleTriggerSummarize}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-            </button>
+            <div className="attach-container" ref={uploadMenuRef} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <button type="button" className="attach-btn" title="Attach file" onClick={() => setShowUploadMenu(!showUploadMenu)}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+              </button>
+              
+              <AnimatePresence>
+                {showUploadMenu && (
+                  <motion.div 
+                    className="upload-popover"
+                    initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 15, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div className="upload-popover-header">
+                      Choose File Type
+                    </div>
+                    <div className="upload-popover-options">
+                      <div className="upload-popover-option" onClick={() => triggerUpload('.pdf')}>
+                        <span className="popover-option-icon">📕</span>
+                        <div className="popover-option-text">
+                          <span className="popover-option-title">PDF Document</span>
+                          <span className="popover-option-desc">Upload scientific papers or PDFs</span>
+                        </div>
+                      </div>
+                      
+                      <div className="upload-popover-option" onClick={() => triggerUpload('.txt')}>
+                        <span className="popover-option-icon">📄</span>
+                        <div className="popover-option-text">
+                          <span className="popover-option-title">Text File</span>
+                          <span className="popover-option-desc">Upload raw text datasets or notes</span>
+                        </div>
+                      </div>
+                      
+                      <div className="upload-popover-option" onClick={() => triggerUpload('.md')}>
+                        <span className="popover-option-icon">📝</span>
+                        <div className="popover-option-text">
+                          <span className="popover-option-title">Markdown</span>
+                          <span className="popover-option-desc">Upload research documentation</span>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
             <textarea
               ref={textareaRef}
               className="chat-input"
